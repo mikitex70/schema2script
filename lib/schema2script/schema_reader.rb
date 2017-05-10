@@ -50,7 +50,71 @@ module Schema2Script
                 end
             end
             
-            tables
+            # Search for relations
+            tables.each do |table|
+                table.fields.each do |srcField|
+                    @doc.xpath("//mxCell[@source='#{srcField.id}']").each do |relation|
+                        dstField   = field_by_id(tables, relation['target'])
+                        styles     = relation['style'].split ';'
+                        startArrow = styles.detect { |s| s =~ /^startArrow=/ }
+                        endArrow   = styles.detect { |s| s =~ /^endArrow=/ }
+                        startArrow = startArrow.split('=')[1] unless startArrow.nil?
+                        endArrow   = endArrow.split('=')[1]   unless endArrow.nil?
+                        
+                        #                     STDERR.print "#{srcField.table.name}.#{srcField.name} - startArrow=#{startArrow}, endArrow=#{endArrow}"
+                        
+                        if ["ERmany", "ERoneToMany"].include? endArrow
+                            STDERR.puts "WARNING: reversing relation as seems reversed: #{srcField.table.name}.#{srcField.name} (#{startArrow}) -> #{dstField.table.name}.#{dstField.name} (#{endArrow})"
+                            srcField, dstField = dstField, srcField 
+                        elsif relation.parent.name == 'object' && relation.parent['reverseRelation'].to_s.strip =~ /^(y(es)?|t(rue)?|s[iì]?)$/i
+                            # Requested to swap relation, quick fix instead to delete and re-create the relation
+                            STDERR.puts "INFO: #{srcField.table.name}.#{srcField.name} (#{startArrow})-> #{dstField.table.name}.#{dstField.name} (#{endArrow}): relation explicitly reversed"
+                            srcField, dstField = dstField, srcField 
+                        end
+                        
+                        if dstField.nil?
+                            STDERR.puts "ERROR: target foreign key not found: field=#{srcField.table.name}.#{srcField.name} target id=#{relation['target']}"
+                            break;
+                        end
+                        
+                        dstField.table.add_fk(relation['value'], dstField, srcField)
+                    end
+                end
+            end
+            
+            # Sort tables to avoid troubles when generating foreign key constraints
+            sort tables
+        end
+        
+        def sort(tables)
+            tables.sort do |x, y|
+                if x.fks.empty? && y.fks.empty?
+                    x.name <=> y.name               # no fks, order alphabetically
+                elsif x.fks.empty?
+                    -1                              # x has no relations, goes first
+                elsif y.fks.empty?
+                    1                               # y has no relations, goes first
+                elsif x.references? y
+                    1                               # x references y, y need to go first
+                elsif y.references? x
+                    -1                              # y references x, x need to go first
+                elsif x.fks.length < y.fks.length
+                    -1                              # x has fewer relations, goes first to reduce conflicts
+                elsif x.fks.length > y.fks.length
+                    1                               # y has fewer relations, goes first to reduce conflicts
+                else
+                    x.name <=> y.name               # no other rules, order alphabetically
+                end
+            end
+        end
+        
+        def field_by_id(tables, field_id)
+            tables.each do |table|
+                found = table.fields.detect { |field| field.id == field_id }
+                return found unless found.nil?
+            end
+            
+            nil
         end
         
     end

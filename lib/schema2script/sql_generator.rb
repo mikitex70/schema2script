@@ -27,7 +27,7 @@ module Schema2Script
         def validate_column(column)
             warning "field #{column.table.name}.#{column.name} declared NOT NULL with NULL as default value" if column.not_null? && column.default == 'null'
         end
-
+        
         def generate_table(table)
             ddl_script = ''
             separator  = ''
@@ -51,6 +51,7 @@ module Schema2Script
             
             # Emit primary key constraint, if required
             ddl_script << sprintf("%s    %s", separator, primary_key(table)) unless table.pks.empty?
+            ddl_script << sprintf("%s    %s", separator, table.fks.map { |fk| foreign_key fk }.join("#{separator}    ")) unless table.fks.empty?
             ddl_script << "\n);\n\n" # End of table
             
             # Emit table and column comments, if necessary
@@ -71,6 +72,10 @@ module Schema2Script
             "Primary Key (#{table.pks.join(', ')})"
         end
         
+        def foreign_key(fk)
+            "Foreign Key(#{fk.child.name}) References #{fk.master.table.name}(#{fk.master.name})"
+        end
+        
         def table_comment(table)
             "Comment On Table #{table.name} Is '#{table.comment.gsub(/'/, "''")}';"
         end
@@ -78,12 +83,12 @@ module Schema2Script
         def column_comment(column)
             "Comment On Column #{column.table.name}.#{column.name} Is '#{column.comment.gsub(/'/, "''")}';"
         end
-
+        
         def default_value(column)
             return "Null"                if column.default =~ /\s*null\s*/i
             return "'#{column.default}'" if column.textType?
             return column.default        unless column.typestampType?
-
+            
             normalized_timestamp(column.default)
         end
         
@@ -95,7 +100,7 @@ module Schema2Script
             return @current_time      if time_expr?      value
             return @current_date      if date_expr?      value
             return @current_timestamp if timestamp_expr? value
-
+            
             # Provare a vedere in https://gist.github.com/jackrg/2927162
             value = value.to_s.gsub(/gennaio|gen/i  , 'Jan')
                               .gsub(/febbraio/i     , 'Feb')
@@ -109,7 +114,7 @@ module Schema2Script
                               .gsub(/ottobre|ott/i  , 'Oct')
                               .gsub(/novembre/i     , 'Nov')
                               .gsub(/dicembre|dic/i , 'Dec')
-
+            
             return "'"+DateTime.parse(value).strftime('%Y-%m-%d %H:%M:%S')+"'"
         end
         

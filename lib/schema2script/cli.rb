@@ -17,15 +17,16 @@ module Schema2Script
           Diagrams can be in XML format (compressed or not) or in SVG format with embedded XML source.
         LONGDESC
         method_option :env,    :enum    => [ "fullstack", "api", "backend", "conversion", "persistence" ],
-                            :default => "fullstack",
-                            :desc    => "kind of stack to generate"
+                               :default => "fullstack",
+                               :desc    => "kind of stack to generate"
         method_option :file,   :default => "sboot_generate.sh",
-                            :desc    => "file for the generated sboot commands script"
+                               :desc    => "file for the generated sboot commands script"
         method_option :stdout, :type    => :boolean,
-                            :default => false,
-                            :desc    => "generate code to standard output"
+                               :default => false,
+                               :desc    => "generate code to standard output"
         def sboot(file)
             tables = Schema2Script::SchemaReader.new(file).get_tables
+            
             emit generate_sboot_commands(tables, options[:env])
         end
         

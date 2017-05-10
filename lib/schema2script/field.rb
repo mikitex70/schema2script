@@ -1,8 +1,9 @@
 # encoding: UTF-8
 module Schema2Script
     class Field
-        attr_accessor :id, :constraints, :not_null, :table
+        attr_accessor :id, :constraints, :not_null, :table, :unique
         alias_method  :not_null?, :not_null
+        alias_method  :unique?, :unique
         attr_reader   :name, :type, :comment, :default
         
         def initialize()
@@ -25,6 +26,7 @@ module Schema2Script
             field.comment  = node['comment']
             field.default  = node['default']
             field.not_null = !!(node['notNull'].to_s.strip =~ /^(y(es)?|t(rue)?|s[iì]?)$/i)
+            field.unique   = !!(node['unique' ].to_s.strip =~ /^(y(es)?|t(rue)?|s[iì]?)$/i)
             
             if name =~ /([^:]+)\s*:?\s*(.*)/
                 field.name, field.type = $1, $2

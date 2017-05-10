@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'schema2script/sql_generator'
 
 module Schema2Script

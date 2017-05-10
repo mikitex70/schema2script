@@ -1,15 +1,17 @@
 # encoding: UTF-8
 require 'schema2script/field'
+require 'schema2script/foreign_keys'
 
 module Schema2Script
     class Table
-        attr_accessor :id, :fields, :pks, :pre_script, :post_script
+        attr_accessor :id, :fields, :pks, :pre_script, :post_script, :fks
         attr_reader   :name, :comment
         
         def initialize()
             @name   = ""
             @fields = []
             @pks    = []
+            @fks    = []
         end
         
         def self.create_from_node(node)
@@ -26,7 +28,7 @@ module Schema2Script
             table.comment     = node['comment']
             table.pre_script  = node['preScript'].to_s
             table.post_script = node['postScript'].to_s
-
+            
             unless table.name.empty?
                 node.document.xpath("//mxCell[@parent='#{table.id}']").each do |attr|
                     field = Field.create_from_node attr, table
@@ -41,6 +43,14 @@ module Schema2Script
             end
             
             return table
+        end
+        
+        def add_fk(name, child_field, master_field)
+            @fks << FK_Constraint.new(name, child_field, master_field)
+        end
+        
+        def references?(tab)
+            not @fks.detect { |fk| fk.master.table == tab}.nil?
         end
         
         def name=(value)

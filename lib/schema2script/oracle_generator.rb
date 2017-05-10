@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'schema2script/sql_generator'
 
 module Schema2Script
@@ -10,7 +11,11 @@ module Schema2Script
         end
         
         def primary_key(table)
-            "Constraint #{table.name}_pk Primary Key (#{table.pks.join(', ')})"
+            "Constraint PK_#{table.name} Primary Key (#{table.pks.join(', ')})"
+        end
+        
+        def foreign_key(fk_constraint)
+            "Constraint FK_#{fk_constraint.name} Foreign Key (#{fk_constraint.child.name}) References #{fk_constraint.master.table.name}(#{fk_constraint.master.name})"
         end
         
         def validate_column(column)
