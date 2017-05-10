@@ -24,6 +24,8 @@ Gem::Specification.new do |spec|
     end
     
     spec.add_dependency 'thor'
+    spec.add_dependency 'nokogiri'
+    #spec.add_dependency 'uri'
     spec.add_dependency 'chunky_png'
     spec.add_development_dependency 'rspec'
     spec.add_development_dependency 'rake'
