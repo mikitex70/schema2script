@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'schema2script/cli'
+
+Schema2Script::CLI.start(ARGV)
