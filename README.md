@@ -81,6 +81,7 @@ The www.draw.io ER schema can be tuned for the `sboot` and the `ddl` commands by
 * `comment`: `string`, comment for the table
 * `preScript`: `string`, script/text to generate before the CREATE TABLE
 * `postScript`: `string`, script/text to generate after the CREATE TABLE (after the COMMENT and ALTER TABLE instructions)
+* `plural`: `string`, plural name for the table
 
 ## Column attributes
 

@@ -78,19 +78,24 @@ module Schema2Script
         end
         
         def generate_sboot_commands(tables, env)
-            return tables.map { |table| "sboot generate --env=#{env} #{table.name} #{sbootFields(table)}" }.join("\n")
+            return tables.map { |table| "sboot generate --env=#{env} #{table.name}#{plural table} #{sbootFields table}" }.join("\n")
+        end
+        
+        def plural table
+            return ":#{table.plural}" unless table.plural.empty?
+            ""
         end
         
         def sbootFields(table)
-            table.fields.map { |field| "#{field.name}:#{sbootType(field)}#{sbootConstraint(field)}"}.join(" ")
+            table.fields.map { |field| "#{field.name}#{sbootType(field)}#{sbootConstraint(field)}"}.join(" ")
         end
         
         def sbootType(field)
             sbtype = if field.type =~ /^(\w+)/ then $1 else field.type end
-            return ''     if sbtype.empty?
-            return 'text' if sbtype.casecmp('char') == 0 # char type isn't recognized by sboot
+            return ''      if sbtype.empty?
+            return ':text' if sbtype.casecmp('char') == 0 # char type isn't recognized by sboot
             
-            return sbtype if ['string','text','varchar','varchar2','number','long','int','integer','double','numeric','date'].include? sbtype.downcase
+            return ":#{sbtype}" if ['string','text','varchar','varchar2','number','long','int','integer','double','numeric','date'].include? sbtype.downcase
             
             STDERR.puts "WARNING: type #{sbtype} is not supported by sboot (field #{field.table.name}.#{field.name})"
             '' # fallthrough for an unrecognized type
