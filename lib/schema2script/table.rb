@@ -4,7 +4,7 @@ require 'schema2script/foreign_keys'
 
 module Schema2Script
     class Table
-        attr_accessor :id, :fields, :pks, :pre_script, :post_script, :fks
+        attr_accessor :id, :fields, :pks, :pre_script, :post_script, :fks, :plural
         attr_reader   :name, :comment
         
         def initialize()
@@ -28,6 +28,7 @@ module Schema2Script
             table.comment     = node['comment']
             table.pre_script  = node['preScript'].to_s
             table.post_script = node['postScript'].to_s
+            table.plural      = node['plural'].to_s
             
             unless table.name.empty?
                 node.document.xpath("//mxCell[@parent='#{table.id}']").each do |attr|
