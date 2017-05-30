@@ -40,7 +40,7 @@ module Schema2Script
             
             # Scan for attribute of table
             table.fields.each do |field|
-                fieldType    = if field.type.empty? then @default_string_type else field.type.capitalize end
+                fieldType =  sql_type field.type
                 fieldType << " Default #{default_value(field)}" unless field.default.empty?
                 fieldType << " Not Null" if field.not_null?
                 
@@ -128,6 +128,16 @@ module Schema2Script
         
         def timestamp_expr?(value)
             !!(value.to_s.strip =~ /^(current_timestamp|now)/i)
+        end
+        
+        def sql_type(type)
+            return @default_string_type if type.empty?
+            return uuid_type            if type.downcase == 'uuid'
+            type.capitalize
+        end
+        
+        def uuid_type
+            return 'VarChar2(32)'
         end
     end
 end
