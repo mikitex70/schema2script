@@ -95,7 +95,7 @@ module Schema2Script
             return ''      if sbtype.empty?
             return ':text' if sbtype.casecmp('char') == 0 # char type isn't recognized by sboot
             
-            return ":#{sbtype}" if ['string','text','varchar','varchar2','number','long','int','integer','double','numeric','date'].include? sbtype.downcase
+            return ":#{sbtype}" if ['string','text','varchar','varchar2','number','long','int','integer','double','numeric','date','uuid'].include? sbtype.downcase
             
             STDERR.puts "WARNING: type #{sbtype} is not supported by sboot (field #{field.table.name}.#{field.name})"
             '' # fallthrough for an unrecognized type
