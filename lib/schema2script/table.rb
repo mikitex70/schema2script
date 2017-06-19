@@ -36,7 +36,7 @@ module Schema2Script
                     
                     unless field.name.empty?
                         table.fields.each do |fld|
-                            STDERR.puts "WARNING: field #{table.name}.#{field.name} already declared" if field.name == fld.name
+                            STDERR.puts "WARNING: field #{table.name}.#{field.name} already declared".light_yellow if field.name == fld.name
                         end
                         table.fields << field
                     end
@@ -46,8 +46,8 @@ module Schema2Script
             return table
         end
         
-        def add_fk(name, child_field, master_field)
-            @fks << FK_Constraint.new(name, child_field, master_field)
+        def add_fk(kind, name, child_field, master_field)
+            @fks << FK_Constraint.new(kind, name, child_field, master_field)
         end
         
         def references?(tab)

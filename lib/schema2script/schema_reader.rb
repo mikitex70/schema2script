@@ -42,11 +42,13 @@ module Schema2Script
             tables = []
             
             @doc.xpath('//mxCell[@parent="1"]').each do |node|
-                table = Table.create_from_node node
-                
-                unless table.name.empty?
-                    tables.each { |tab| STDERR.puts "WARNING: table #{table.name} already declared" if tab.name == table.name }
-                    tables << table
+                unless node.has_attribute? 'edge' # skip named relations
+                    table = Table.create_from_node node
+                    
+                    unless table.name.empty?
+                        tables.each { |tab| STDERR.puts "WARNING: table #{table.name} already declared".light_yellow if tab.name == table.name }
+                        tables << table
+                    end
                 end
             end
             
@@ -61,23 +63,28 @@ module Schema2Script
                         startArrow = startArrow.split('=')[1] unless startArrow.nil?
                         endArrow   = endArrow.split('=')[1]   unless endArrow.nil?
                         
-                        #                     STDERR.print "#{srcField.table.name}.#{srcField.name} - startArrow=#{startArrow}, endArrow=#{endArrow}"
+#                         STDERR.print "==>#{srcField.table.name}.#{srcField.name} - startArrow=#{startArrow}, endArrow=#{endArrow}\n"
                         
-                        if ["ERmany", "ERoneToMany"].include? endArrow
-                            STDERR.puts "WARNING: reversing relation as seems reversed: #{srcField.table.name}.#{srcField.name} (#{startArrow}) -> #{dstField.table.name}.#{dstField.name} (#{endArrow})"
+                        if ["ERmany", "ERoneToMany"].include? startArrow
+                            STDERR.puts "WARNING: reversing relation as seems reversed: #{srcField.table.name}.#{srcField.name} (#{startArrow}) -> #{dstField.table.name}.#{dstField.name} (#{endArrow})".light_yellow
                             srcField, dstField = dstField, srcField 
+                            startArrow, endArrow = endArrow, startArrow
                         elsif relation.parent.name == 'object' && relation.parent['reverseRelation'].to_s.strip =~ /^(y(es)?|t(rue)?|s[iì]?)$/i
                             # Requested to swap relation, quick fix instead to delete and re-create the relation
-                            STDERR.puts "INFO: #{srcField.table.name}.#{srcField.name} (#{startArrow})-> #{dstField.table.name}.#{dstField.name} (#{endArrow}): relation explicitly reversed"
-                            srcField, dstField = dstField, srcField 
+                            STDERR.puts "INFO: #{srcField.table.name}.#{srcField.name} (#{startArrow})-> #{dstField.table.name}.#{dstField.name} (#{endArrow}): relation explicitly reversed".green
+                            srcField, dstField = dstField, srcField
+                            startArrow, endArrow = endArrow, startArrow
                         end
                         
                         if dstField.nil?
-                            STDERR.puts "ERROR: target foreign key not found: field=#{srcField.table.name}.#{srcField.name} target id=#{relation['target']}"
+                            STDERR.puts "ERROR: target foreign key not found: field=#{srcField.table.name}.#{srcField.name} target id=#{relation['target']}".light_red
                             break;
                         end
                         
-                        dstField.table.add_fk(relation['value'], dstField, srcField)
+                        startArrow = endArrow     if startArrow.nil?
+                        startArrow = 'ERoneToOne' if startArrow == 'none' # standard link, no ER
+
+                        dstField.table.add_fk(startArrow, relation['value'], dstField, srcField)
                     end
                 end
             end

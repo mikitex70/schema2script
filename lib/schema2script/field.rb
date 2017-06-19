@@ -51,7 +51,7 @@ module Schema2Script
         def type=(value)
             @type = value.to_s.gsub(/&nbsp;/, ' ').strip
             
-            STDERR.puts "WARNING: unrecognized field type #{@type} for field #{@table.name}.#{@name}" unless valid_type?
+            STDERR.puts "WARNING: unrecognized field type #{@type} for field #{@table.name}.#{@name}".light_yellow unless valid_type?
         end
         
         def comment=(value)

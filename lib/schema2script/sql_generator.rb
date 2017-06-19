@@ -16,7 +16,7 @@ module Schema2Script
         end
         
         def warning(message)
-            STDERR.puts "WARNING: #{message}"
+            STDERR.puts "WARNING: #{message}".light_yellow
         end
         
         def validate(table)

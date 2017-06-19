@@ -78,12 +78,35 @@ module Schema2Script
         end
         
         def generate_sboot_commands(tables, env)
-            return tables.map { |table| "sboot generate --env=#{env} #{table.name}#{plural table} #{sbootFields table}" }.join("\n")
+            entities =  tables.map {|table| "sboot generate --env=#{env} #{table.name}#{plural table} #{sbootFields table}" }.join("\n")
+            
+            relations = tables.map do |table|
+                table.fks.map do |fk|
+                  "sboot relation --env=#{env} #{fk.master.table.name}:#{fk.master.name} #{relation_name fk} #{fk.child.table.name}:#{fk.child.name}#{':'+fk.name unless fk.name.empty?}"
+                end.join "\n"
+            end.reject { |l| l.empty? }.join "\n"
+            
+            [entities, relations].join "\n"
+        end
+        
+        def relation_name fk
+            kinds = {
+                'ERzeroToOne' => 'one_to_one',
+                'ERzeroToMany'=> 'one_to_many',
+                'ERoneToMany' => 'one_to_many',
+                'ERoneToOne'  => 'one_to_one',
+                'ERmandOne'   => 'one_to_one',
+                'ERone'       => 'one_to_one',
+                'ERmany'      => 'many_to_many'
+            }
+            
+            return fk.kind if kinds[fk.kind].nil?
+            kinds[fk.kind]
         end
         
         def plural table
-            return ":#{table.plural}" unless table.plural.empty?
-            ""
+            return "" if table.plural.empty?
+            ":#{table.plural}"
         end
         
         def sbootFields(table)
@@ -97,7 +120,7 @@ module Schema2Script
             
             return ":#{sbtype}" if ['string','text','varchar','varchar2','number','long','int','integer','double','numeric','date','uuid'].include? sbtype.downcase
             
-            STDERR.puts "WARNING: type #{sbtype} is not supported by sboot (field #{field.table.name}.#{field.name})"
+            STDERR.puts "WARNING: type #{sbtype} is not supported by sboot (field #{field.table.name}.#{field.name})".light_yellow
             '' # fallthrough for an unrecognized type
         end
         
